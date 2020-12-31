@@ -7,6 +7,7 @@ export default class Game {
     interval = null;
     score = 0;
     isDropping = false;
+    isGame = true;
     dropping = [];
     droppingTime = 0;
     stage = [[]];
@@ -28,18 +29,26 @@ export default class Game {
 
     // main
     loop(time = 0) {
-        // key
-        this.key.keyStatusCheck();
+        if (this.isGame) {
+            // key
+            this.key.keyStatusCheck();
 
-        // new block
-        if (!this.isDropping) this.newBlock();
-        this.runBlock();
+            // new block
+            if (!this.isDropping) this.newBlock();
+            this.runBlock();
 
-        // display
-        this.display();
+            // check game over
+            let b = this.gameCheck();
+            if (b) this.isGame = false;
 
-        // loop -> setInterval?
-        setTimeout(() => { this.loop(time++); }, 1000 / 30);
+            // display
+            this.display();
+
+            // loop -> setInterval?
+            setTimeout(() => { this.loop(time++); }, 1000 / 30);
+        } else {
+            alert("ゲームオーバー！\nスコア：" + this.score);
+        }
     }
 
     // display
@@ -67,6 +76,16 @@ export default class Game {
         this.stroke(200, 200, 200);
         for (let x = 1; x < 4; x++) this.line(x * 80, 0, x * 80, 640);
         for (let y = 1; y < 8; y++) this.line(0, y * 80, 320, y * 80);
+        this.stroke(255, 80, 80);
+        this.line(0, 80, 320, 80);
+    }
+
+    // gameCheck
+    gameCheck() {
+        for (let x = 0; x < 4; x++) {
+            if (this.stage[x][0] != -1) return true;
+        }
+        return false;
     }
 
     // newBlock
@@ -107,7 +126,9 @@ export default class Game {
                 }
             }
             if (this.dropping.length == 0) this.isDropping = false;
-            //if(! this.isDropping ) //check
+            if (!this.isDropping) {
+                this.removeBlock();
+            }
         }
 
         // player
@@ -150,7 +171,6 @@ export default class Game {
     dropCheck(block) {
         let x = block["x"];
         let y = block["y"];
-        let c = block["color"];
         if (y < -1) return false;
         if (y == 7) return true;
         if (this.stage[x][y + 1] != -1) return true;
@@ -167,7 +187,52 @@ export default class Game {
 
     // remove block
     removeBlock() {
+        // set flg
+        let removeFlg = [[]];
+        for (let x = 0; x < 4; x++) {
+            removeFlg[x] = new Array(8);
+            for (let y = 0; y < 8; y++) removeFlg[x][y] = false;
+        }
 
+        // check remove
+        let way = [[0, -1], [-1, 0], [1, 0], [0, 1]];
+        for (let x = 0; x < 4; x++) for (let y = 0; y < 8; y++) {
+            for (let i = 0; i < 4; i++) {
+                let tx = x + way[i][0];
+                let ty = y + way[i][1];
+                if (tx < 0 || ty < 0 || tx > 3 || ty > 7) continue;
+                if (this.stage[x][y] == this.stage[tx][ty]) removeFlg[x][y] = true;
+            }
+        }
+
+        // remove
+        for (let x = 0; x < 4; x++) for (let y = 0; y < 8; y++) {
+            if (removeFlg[x][y]) {
+                this.score++;
+                this.stage[x][y] = -1;
+            }
+        }
+
+        // check floating
+        for (let x = 0; x < 4; x++) for (let y = 7; y >= 0; y--) {
+            if (this.stage[x][y] == -1) continue;
+            for (let ty = 7; ty > y; ty--) {
+                if (this.stage[x][ty] == -1) {
+                    this.dropping.push({
+                        x: x,
+                        y: y,
+                        color: this.stage[x][y]
+                    });
+                    this.stage[x][y] = -1;
+                    this.isDropping = true;
+                    break;
+                }
+            }
+        }
+
+        // score update
+        let e = document.getElementById("score");
+        e.innerText = this.score;
     }
 
     // rect
