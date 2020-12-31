@@ -86,6 +86,7 @@ export default class Game {
                 color: c[i]
             });
         }
+        this.isPlayer = true;
         this.droppingTime = 0;
         this.isDropping = true;
     }
@@ -111,7 +112,11 @@ export default class Game {
 
         // player
         if (this.key.pushSpace()) {
-            //[this.droppingColor[0], this.droppingColor[1]] = [this.droppingColor[1], this.droppingColor[0]]
+            if (this.isPlayer) {
+                let y = this.dropping[0]["y"];
+                this.dropping[0]["y"] = this.dropping[1]["y"];
+                this.dropping[1]["y"] = y;
+            }
         }
     }
 
@@ -128,6 +133,7 @@ export default class Game {
 
     // set block
     dropLanding(block) {
+        this.isPlayer = false;
         let x = block["x"];
         let y = block["y"];
         this.stage[x][y] = block["color"];
