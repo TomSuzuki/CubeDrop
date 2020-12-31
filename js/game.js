@@ -1,4 +1,5 @@
 import DropColor from "./setting.js";
+import Key from "./key.js";
 import { random } from "./function.js";
 
 export default class Game {
@@ -16,6 +17,7 @@ export default class Game {
     constructor(ctx) {
         this.ctx = ctx;
         this.dropColor = new DropColor();
+        this.key = new Key();
 
         // init stage
         for (let x = 0; x < 4; x++) {
@@ -28,6 +30,9 @@ export default class Game {
 
     // main
     loop(time = 0) {
+        // key
+        this.key.keyStatusCheck();
+
         // new block
         if (!this.isDropping) this.newBlock();
         this.runBlock();
@@ -84,6 +89,7 @@ export default class Game {
 
     // run dropping block
     runBlock() {
+        // move
         this.droppingTime += 4;
         if (this.droppingTime == 80) {
             this.droppingTime = 0;
@@ -92,6 +98,11 @@ export default class Game {
                 this.dropLanding();
                 this.isDropping = false;
             }
+        }
+
+        // player
+        if (this.key.pushSpace()) {
+            [this.droppingColor[0], this.droppingColor[1]] = [this.droppingColor[1], this.droppingColor[0]]
         }
     }
 
