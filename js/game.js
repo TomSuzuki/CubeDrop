@@ -111,13 +111,39 @@ export default class Game {
         }
 
         // player
-        if (this.key.pushSpace()) {
-            if (this.isPlayer) {
+        if (this.isPlayer) {
+            if (this.key.pushSpace()) {
                 let y = this.dropping[0]["y"];
                 this.dropping[0]["y"] = this.dropping[1]["y"];
                 this.dropping[1]["y"] = y;
             }
+            if (this.key.pushRight()) {
+                // 移動チェック
+                if (!this.checkFilled(1)) {
+                    this.dropping[0]["x"]++;
+                    this.dropping[1]["x"]++;
+                }
+            };
+            if (this.key.pushLeft()) {
+                // 移動チェック
+                if (!this.checkFilled(-1)) {
+                    this.dropping[0]["x"]--;
+                    this.dropping[1]["x"]--;
+                }
+            };
         }
+    }
+
+    // check move x
+    checkFilled(mx) {
+        for (let i = 0; i < 2; i++) {
+            let x = mx + this.dropping[i]["x"];
+            let y = this.dropping[i]["y"] + 1;
+            if (x < 0 || x > 3) return true;
+            if (y < 0) continue;
+            if (this.stage[x][y] != -1) return true;
+        }
+        return false;
     }
 
     // drop stop check
