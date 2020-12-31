@@ -7,9 +7,7 @@ export default class Game {
     interval = null;
     score = 0;
     isDropping = false;
-    droppingColor = [0, 0];
-    droppingX = 0;
-    droppingY = 0;
+    dropping = [];
     droppingTime = 0;
     stage = [[]];
 
@@ -58,12 +56,11 @@ export default class Game {
         }
 
         // drop block
-        if (this.isDropping) {
-            for (let i = 0; i < 2; i++) {
-                this.fill(this.dropColor.getColorR(this.droppingColor[i]), this.dropColor.getColorG(this.droppingColor[i]), this.dropColor.getColorB(this.droppingColor[i]));
-                let y = this.droppingY * 80 + this.droppingTime + (i * 80);
-                this.rect(this.droppingX * 80, y, 80, 80);
-            }
+        for (let i in this.dropping) {
+            this.fill(this.dropColor.getColorR(this.dropping[i]["color"]), this.dropColor.getColorG(this.dropping[i]["color"]), this.dropColor.getColorB(this.dropping[i]["color"]));
+            let x = 80 * this.dropping[i]["x"];
+            let y = 80 * this.dropping[i]["y"] + this.droppingTime;
+            this.rect(x, y, 80, 80);
         }
 
         // background grid
@@ -75,14 +72,20 @@ export default class Game {
     // newBlock
     newBlock() {
         // new color
+        let c = [];
         do {
-            this.droppingColor[0] = Number(random(6));
-            this.droppingColor[1] = Number(random(6));
-        } while ((this.droppingColor[0] == this.droppingColor[1]));
+            c[0] = Number(random(6));
+            c[1] = Number(random(6));
+        } while ((c[0] == c[1]));
 
         // position
-        this.droppingY = -3;
-        this.droppingX = 1;
+        for (let i = 0; i < 2; i++) {
+            this.dropping.push({
+                x: 1,
+                y: -3 + i,
+                color: c[i]
+            });
+        }
         this.droppingTime = 0;
         this.isDropping = true;
     }
@@ -90,38 +93,49 @@ export default class Game {
     // run dropping block
     runBlock() {
         // move
-        this.droppingTime += 4;
+        this.droppingTime += 10;
         if (this.droppingTime == 80) {
             this.droppingTime = 0;
-            this.droppingY += 1;
-            if (this.dropCheck()) {
-                this.dropLanding();
-                this.isDropping = false;
+            this.dropping.sort((a, b) => { return a["y"] - b["y"]; });
+            for (let i = this.dropping.length - 1; i >= 0; i--) {
+                this.dropping[i]["y"]++;
+                let b = this.dropCheck(this.dropping[i]);
+                if (b) {
+                    this.dropLanding(this.dropping[i]);
+                    this.dropping.splice(i, 1);
+                }
             }
+            if (this.dropping.length == 0) this.isDropping = false;
+            //if(! this.isDropping ) //check
         }
 
         // player
         if (this.key.pushSpace()) {
-            [this.droppingColor[0], this.droppingColor[1]] = [this.droppingColor[1], this.droppingColor[0]]
+            //[this.droppingColor[0], this.droppingColor[1]] = [this.droppingColor[1], this.droppingColor[0]]
         }
     }
 
     // drop stop check
-    dropCheck() {
-        let x = this.droppingX;
-        let y = this.droppingY;
-        if (y == 6) return true;
-        if (this.stage[x][y + 2] != -1) return true;
+    dropCheck(block) {
+        let x = block["x"];
+        let y = block["y"];
+        let c = block["color"];
+        if (y < -1) return false;
+        if (y == 7) return true;
+        if (this.stage[x][y + 1] != -1) return true;
         return false;
     }
 
     // set block
-    dropLanding() {
-        for (let i = 0; i < 2; i++) {
-            let x = this.droppingX;
-            let y = this.droppingY + i;
-            this.stage[x][y] = this.droppingColor[i];
-        }
+    dropLanding(block) {
+        let x = block["x"];
+        let y = block["y"];
+        this.stage[x][y] = block["color"];
+    }
+
+    // remove block
+    removeBlock() {
+
     }
 
     // rect
